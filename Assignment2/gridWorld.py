@@ -12,6 +12,17 @@ class gridWorld(object):
     
     def __init__(self, file = "gridworlds/tiny.json"):
         self.load_from_file(file)
+        self.create_next_state_map()
+
+    def create_next_state_map(self):
+        self.next_states = {}
+        # Fill map
+        for s in self.states():
+            self.next_states[s] = set()
+            for a in self.actions():
+                for s_ in self.states():
+                    if self.transition_probability(s, a, s_):
+                        self.next_states[s].add(s_)
 
     def __repr__(self):
         string = "-"*(2 * self.board_mask.shape[1] + 1) + "\n"
@@ -140,12 +151,12 @@ class gridWorld(object):
                 probs.append(self.transition_probability(self.current_state, action, s_next))
                 
         s_next = states[np.random.choice(idx, p = probs)] #choose random next state
-        r      = self.rewards[s_next]
-        d      = self.terminals[s_next]
-        
         self.current_state = s_next
         
-        return self.state(as_tuple), r, d 
+        r         = self.rewards[s_next]
+        done      = self.terminals[s_next]
+
+        return self.state(as_tuple), r, done
         
     def render(self, show_reward = True, show_state = True, show_terminal = True):
         """
@@ -157,8 +168,8 @@ class gridWorld(object):
         ax.imshow(self.board_mask, cmap=cmap)
         
         ax.grid(which='major', axis='both', linestyle='-', color='k', linewidth=2)
-        ax.set_xticks(np.arange(-.5, self.board_mask.shape[1] , 1));
-        ax.set_yticks(np.arange(-.5, self.board_mask.shape[0] , 1));
+        ax.set_xticks(np.arange(-.5, self.board_mask.shape[1] , 1))
+        ax.set_yticks(np.arange(-.5, self.board_mask.shape[0] , 1))
         
         patches = []
         
